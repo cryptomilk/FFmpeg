@@ -19,8 +19,12 @@
  * Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
+#ifdef CONFIG_LIBOPENH264_DLOPEN
+#include "libopenh264_dlopen.h"
+#else
 #include <wels/codec_api.h>
 #include <wels/codec_ver.h>
+#endif
 
 #include "libavutil/attributes.h"
 #include "libavutil/common.h"
@@ -135,6 +139,12 @@ static av_cold int svc_encode_init(AVCodecContext *avctx)
     int log_level;
     WelsTraceCallback callback_function;
     AVCPBProperties *props;
+
+#ifdef CONFIG_LIBOPENH264_DLOPEN
+    if (loadLibOpenH264(avctx)) {
+         return AVERROR_ENCODER_NOT_FOUND;
+    }
+#endif
 
     if ((err = ff_libopenh264_check_version(avctx)) < 0)
         return AVERROR_ENCODER_NOT_FOUND;

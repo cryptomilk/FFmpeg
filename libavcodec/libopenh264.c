@@ -20,8 +20,13 @@
  */
 
 #include <string.h>
+
+#ifdef CONFIG_LIBOPENH264_DLOPEN
+#include "libopenh264_dlopen.h"
+#else
 #include <wels/codec_api.h>
 #include <wels/codec_ver.h>
+#endif
 
 #include "libavutil/log.h"
 
@@ -52,7 +57,15 @@ int ff_libopenh264_check_version(void *logctx)
     // function (for functions returning larger structs), thus skip the check in those
     // configurations.
 #if !defined(_WIN32) || !defined(__GNUC__) || !ARCH_X86_32 || AV_GCC_VERSION_AT_LEAST(4, 7)
-    OpenH264Version libver = WelsGetCodecVersion();
+    OpenH264Version libver;
+
+#ifdef CONFIG_LIBOPENH264_DLOPEN
+    if (loadLibOpenH264(logctx)) {
+         return AVERROR_EXTERNAL;
+    }
+#endif
+
+    libver = WelsGetCodecVersion();
     if (memcmp(&libver, &g_stCodecVersion, sizeof(libver))) {
         av_log(logctx, AV_LOG_ERROR, "Incorrect library version loaded\n");
         return AVERROR(EINVAL);
